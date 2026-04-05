@@ -50,6 +50,10 @@ const config: Config = {
       tagName: 'meta',
       attributes: { property: 'og:url', content: 'https://amit641.github.io/autotest/' },
     },
+    {
+      tagName: 'meta',
+      attributes: { name: 'google-site-verification', content: 'pX4FkYybN5DcahiMv-TLXFKjgI277ld0HxGFbZAJR8Y' },
+    },
   ],
 
   i18n: {
