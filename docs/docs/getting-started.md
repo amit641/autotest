@@ -7,7 +7,7 @@ sidebar_position: 2
 ## Installation
 
 ```bash
-npm install -D testpilot-ai
+npm install -D @amit641/testpilot-ai
 ```
 
 Or use it directly with npx:

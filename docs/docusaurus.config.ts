@@ -55,7 +55,7 @@ const config: Config = {
           label: 'Docs',
         },
         {
-          href: 'https://www.npmjs.com/package/testpilot-ai',
+          href: 'https://www.npmjs.com/package/@amit641/testpilot-ai',
           label: 'npm',
           position: 'right',
         },
@@ -82,7 +82,7 @@ const config: Config = {
           title: 'Links',
           items: [
             { label: 'GitHub', href: 'https://github.com/amit641/autotest' },
-            { label: 'npm', href: 'https://www.npmjs.com/package/testpilot-ai' },
+            { label: 'npm', href: 'https://www.npmjs.com/package/@amit641/testpilot-ai' },
           ],
         },
       ],
