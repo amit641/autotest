@@ -1,6 +1,6 @@
 {
   "name": "@amit641/testpilot-ai",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "AI-powered test generation that actually works. Generate, verify, and auto-fix tests with any LLM.",
   "type": "module",
   "main": "./dist/index.js",
