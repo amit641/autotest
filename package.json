@@ -1,0 +1,72 @@
+{
+  "name": "autotest-ai",
+  "version": "0.1.0",
+  "description": "AI-powered test generation for JavaScript & TypeScript. Point it at a file, get comprehensive tests instantly.",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "bin": {
+    "autotest": "./dist/cli.js"
+  },
+  "exports": {
+    ".": {
+      "import": {
+        "types": "./dist/index.d.ts",
+        "default": "./dist/index.js"
+      }
+    }
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "lint": "tsc --noEmit",
+    "prepublishOnly": "npm run build"
+  },
+  "keywords": [
+    "test",
+    "testing",
+    "ai",
+    "llm",
+    "test-generation",
+    "vitest",
+    "jest",
+    "typescript",
+    "unit-test",
+    "automation",
+    "openai",
+    "anthropic",
+    "claude",
+    "gpt"
+  ],
+  "author": "",
+  "license": "MIT",
+  "homepage": "https://github.com/amit641/autotest-ai",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/amit641/autotest-ai.git"
+  },
+  "bugs": {
+    "url": "https://github.com/amit641/autotest-ai/issues"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "dependencies": {
+    "aiclientjs": "^0.1.4",
+    "commander": "^12.0.0",
+    "picocolors": "^1.0.0",
+    "typescript": "^5.5.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "tsup": "^8.0.0",
+    "vitest": "^2.0.0"
+  }
+}
