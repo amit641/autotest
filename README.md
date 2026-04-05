@@ -19,16 +19,13 @@
 
 Most AI test generators write tests that **don't pass**. testpilot-ai generates, runs, and auto-fixes tests in a loop until they actually work.
 
-| | testpilot-ai | autotest-ai | @n1k1t/unit-generator | Manual |
-|---|---|---|---|---|
-| **Self-healing tests** | ✅ verify & auto-fix loop | ❌ | ✅ fix command | ❌ |
-| **AST analysis** | ✅ TS compiler API | ❌ raw code | ❌ | — |
-| **Coverage-gap filling** | ✅ lcov + cobertura | ❌ | ✅ cobertura | — |
-| **Providers** | OpenAI, Anthropic, Google, Ollama | OpenAI, Claude | OpenAI, Google, Anthropic | — |
-| **Frameworks** | Vitest, Jest, Mocha, Node | Jest, Vitest, Mocha, Node | Jest only | — |
-| **Context-aware** | ✅ follows imports | ❌ | ❌ | — |
-| **Dependencies** | 4 | 0 | 18 | — |
-| **Analyze command** | ✅ find untested files | ❌ | ✅ | — |
+- **Self-healing tests** — Verify & auto-fix loop until all tests pass
+- **AST analysis** — TypeScript compiler API extracts functions, classes, types, JSDoc
+- **Coverage-gap filling** — Parse lcov/cobertura, generate tests for uncovered code
+- **Any LLM** — OpenAI, Anthropic, Google, Ollama (local models)
+- **4 frameworks** — Vitest, Jest, Mocha, Node test runner
+- **Context-aware** — Follows relative imports for richer prompts
+- **Analyze command** — Find files that need tests
 
 ## Install
 
