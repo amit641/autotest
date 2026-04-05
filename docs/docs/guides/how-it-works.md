@@ -4,7 +4,7 @@ sidebar_position: 4
 
 # How It Works
 
-autotest-ai uses a four-stage pipeline to generate tests:
+testpilot-ai uses a four-stage pipeline to generate tests:
 
 ```
 Source File → Analyzer → Prompt Engine → LLM → Test Writer → Test File

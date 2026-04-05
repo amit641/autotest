@@ -4,18 +4,18 @@ sidebar_position: 5
 
 # Programmatic API
 
-autotest-ai can be used as a library in your own tools and scripts.
+testpilot-ai can be used as a library in your own tools and scripts.
 
 ## Installation
 
 ```bash
-npm install autotest-ai
+npm install testpilot-ai
 ```
 
 ## Generate Tests
 
 ```typescript
-import { generateTests, resolveConfig } from 'autotest-ai';
+import { generateTests, resolveConfig } from 'testpilot-ai';
 
 const config = resolveConfig({
   provider: 'openai',
@@ -33,7 +33,7 @@ console.log(`Tokens used: ${result.tokensUsed}`);
 ## Analyze a File
 
 ```typescript
-import { analyzeFile } from 'autotest-ai';
+import { analyzeFile } from 'testpilot-ai';
 
 const analysis = analyzeFile('src/utils.ts');
 
@@ -54,7 +54,7 @@ for (const exp of analysis.exports) {
 ## Resolve Config
 
 ```typescript
-import { resolveConfig } from 'autotest-ai';
+import { resolveConfig } from 'testpilot-ai';
 
 // Merges: defaults < config file < package.json < your overrides
 const config = resolveConfig({
@@ -67,7 +67,7 @@ const config = resolveConfig({
 ## Dry Run (No File Write)
 
 ```typescript
-import { generateTests, resolveConfig } from 'autotest-ai';
+import { generateTests, resolveConfig } from 'testpilot-ai';
 
 const config = resolveConfig({ provider: 'openai' });
 
@@ -83,7 +83,7 @@ const result = await generateTests('src/utils.ts', config, {
 ## Streaming Callback
 
 ```typescript
-import { generateTests, resolveConfig } from 'autotest-ai';
+import { generateTests, resolveConfig } from 'testpilot-ai';
 
 const config = resolveConfig({ provider: 'openai' });
 
@@ -98,7 +98,7 @@ const result = await generateTests('src/utils.ts', config, {
 ## Framework Detection
 
 ```typescript
-import { detectFramework, getFrameworkInfo } from 'autotest-ai';
+import { detectFramework, getFrameworkInfo } from 'testpilot-ai';
 
 const framework = detectFramework({
   devDependencies: { vitest: '^2.0.0' },
@@ -125,5 +125,5 @@ import type {
   ParameterInfo,
   ImportStatement,
   SymbolKind,
-} from 'autotest-ai';
+} from 'testpilot-ai';
 ```

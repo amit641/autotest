@@ -7,10 +7,10 @@ sidebar_position: 1
 ## Usage
 
 ```bash
-autotest [options] <target>
+testpilot [options] <target>
 ```
 
-The `target` can be a single file or a directory. When pointing at a directory, autotest generates tests for all `.ts`, `.tsx`, `.js`, `.jsx` files (excluding existing test/spec files).
+The `target` can be a single file or a directory. When pointing at a directory, testpilot generates tests for all `.ts`, `.tsx`, `.js`, `.jsx` files (excluding existing test/spec files).
 
 ## Options
 
@@ -36,36 +36,36 @@ The `target` can be a single file or a directory. When pointing at a directory, 
 
 ```bash
 # Generate tests for a single file
-npx autotest-ai src/utils.ts
+npx testpilot src/utils.ts
 
 # Use Anthropic with Claude
-npx autotest-ai src/utils.ts --provider anthropic --model claude-sonnet-4-20250514
+npx testpilot src/utils.ts --provider anthropic --model claude-sonnet-4-20250514
 
 # Generate Jest tests
-npx autotest-ai src/utils.ts --framework jest
+npx testpilot src/utils.ts --framework jest
 
 # Process an entire directory
-npx autotest-ai src/helpers/
+npx testpilot src/helpers/
 
 # Dry run — preview without writing
-npx autotest-ai src/utils.ts --dry-run
+npx testpilot src/utils.ts --dry-run
 
 # Use local Ollama models
-npx autotest-ai src/utils.ts --provider ollama --model llama3
+npx testpilot src/utils.ts --provider ollama --model llama3
 
 # Overwrite existing test files
-npx autotest-ai src/utils.ts --overwrite
+npx testpilot src/utils.ts --overwrite
 
 # Custom instructions
-npx autotest-ai src/utils.ts --instructions "Test with French locale strings"
+npx testpilot src/utils.ts --instructions "Test with French locale strings"
 
 # Redirect output to a specific directory
-npx autotest-ai src/utils.ts --out-dir tests/
+npx testpilot src/utils.ts --out-dir tests/
 ```
 
 ## Output
 
-autotest-ai displays:
+testpilot-ai displays:
 1. **Header** — provider, model, framework, file count
 2. **Progress** — streaming LLM output per file
 3. **File summary** — test file path, test count, categories, duration

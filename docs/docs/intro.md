@@ -5,11 +5,11 @@ sidebar_position: 1
 
 # Introduction
 
-**autotest-ai** is an AI-powered test generation tool for JavaScript and TypeScript. Point it at a source file and get comprehensive, framework-aware tests instantly.
+**testpilot-ai** is an AI-powered test generation tool for JavaScript and TypeScript that **actually works**. It generates tests, runs them, and auto-fixes failures in a loop until they pass.
 
-## Why autotest-ai?
+## Why testpilot-ai?
 
-| | autotest-ai | Writing tests manually | Copilot suggestions |
+| | testpilot-ai | Writing tests manually | Copilot suggestions |
 |---|---|---|---|
 | **Speed** | Entire test file in seconds | Hours per file | One test at a time |
 | **Coverage** | Edge cases + error handling | Often forgotten | Inconsistent |
@@ -29,7 +29,7 @@ sidebar_position: 1
 ## Quick Example
 
 ```bash
-npx autotest-ai src/utils.ts --provider openai
+npx testpilot src/utils.ts --provider openai
 ```
 
 This will:

@@ -3,8 +3,8 @@ import type {Config} from '@docusaurus/types';
 import type * as Preset from '@docusaurus/preset-classic';
 
 const config: Config = {
-  title: 'autotest-ai',
-  tagline: 'AI-powered test generation for JavaScript & TypeScript.',
+  title: 'testpilot-ai',
+  tagline: 'AI-powered test generation that actually works.',
   favicon: 'img/favicon.ico',
 
   future: {
@@ -46,7 +46,7 @@ const config: Config = {
       respectPrefersColorScheme: true,
     },
     navbar: {
-      title: 'autotest-ai',
+      title: 'testpilot-ai',
       items: [
         {
           type: 'docSidebar',
@@ -55,7 +55,7 @@ const config: Config = {
           label: 'Docs',
         },
         {
-          href: 'https://www.npmjs.com/package/autotest-ai',
+          href: 'https://www.npmjs.com/package/testpilot-ai',
           label: 'npm',
           position: 'right',
         },
@@ -82,11 +82,11 @@ const config: Config = {
           title: 'Links',
           items: [
             { label: 'GitHub', href: 'https://github.com/amit641/autotest' },
-            { label: 'npm', href: 'https://www.npmjs.com/package/autotest-ai' },
+            { label: 'npm', href: 'https://www.npmjs.com/package/testpilot-ai' },
           ],
         },
       ],
-      copyright: `Copyright © ${new Date().getFullYear()} autotest-ai. Built with Docusaurus.`,
+      copyright: `Copyright © ${new Date().getFullYear()} testpilot-ai. Built with Docusaurus.`,
     },
     prism: {
       theme: prismThemes.github,

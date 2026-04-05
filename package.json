@@ -1,12 +1,12 @@
 {
-  "name": "autotest-ai",
+  "name": "testpilot-ai",
   "version": "0.1.0",
-  "description": "AI-powered test generation for JavaScript & TypeScript. Point it at a file, get comprehensive tests instantly.",
+  "description": "AI-powered test generation that actually works. Generate, verify, and auto-fix tests with any LLM.",
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "bin": {
-    "autotest": "./dist/cli.js"
+    "testpilot": "./dist/cli.js"
   },
   "exports": {
     ".": {
@@ -37,13 +37,18 @@
     "test-generation",
     "vitest",
     "jest",
+    "mocha",
     "typescript",
     "unit-test",
     "automation",
     "openai",
     "anthropic",
     "claude",
-    "gpt"
+    "gpt",
+    "coverage",
+    "self-healing",
+    "auto-fix",
+    "verify"
   ],
   "author": "",
   "license": "MIT",

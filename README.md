@@ -1,12 +1,12 @@
 <p align="center">
-  <h1 align="center">autotest-ai</h1>
-  <p align="center">AI-powered test generation for JavaScript & TypeScript.<br/>Point it at a file. Get comprehensive tests instantly.</p>
+  <h1 align="center">testpilot-ai</h1>
+  <p align="center">AI-powered test generation that actually works.<br/>Generate, verify, and auto-fix tests with any LLM.</p>
 </p>
 
 <p align="center">
-  <a href="https://www.npmjs.com/package/autotest-ai"><img src="https://img.shields.io/npm/v/autotest-ai.svg" alt="npm version" /></a>
-  <a href="https://www.npmjs.com/package/autotest-ai"><img src="https://img.shields.io/npm/dm/autotest-ai.svg" alt="npm downloads" /></a>
-  <a href="https://github.com/amit641/autotest/blob/main/LICENSE"><img src="https://img.shields.io/npm/l/autotest-ai.svg" alt="license" /></a>
+  <a href="https://www.npmjs.com/package/testpilot-ai"><img src="https://img.shields.io/npm/v/testpilot-ai.svg" alt="npm version" /></a>
+  <a href="https://www.npmjs.com/package/testpilot-ai"><img src="https://img.shields.io/npm/dm/testpilot-ai.svg" alt="npm downloads" /></a>
+  <a href="https://github.com/amit641/autotest/blob/main/LICENSE"><img src="https://img.shields.io/npm/l/testpilot-ai.svg" alt="license" /></a>
 </p>
 
 <p align="center">
@@ -15,96 +15,157 @@
 
 ---
 
-## Why autotest-ai?
+## Why testpilot-ai?
 
-| | autotest-ai | Writing tests manually | Copilot suggestions |
-|---|---|---|---|
-| **Speed** | Entire test file in seconds | Hours per file | One test at a time |
-| **Coverage** | Edge cases + error handling | Often forgotten | Inconsistent |
-| **Framework-aware** | Vitest & Jest native | Manual setup | Generic |
-| **Multi-provider** | OpenAI, Anthropic, Google, Ollama | — | OpenAI only |
-| **AST-based analysis** | Understands your code structure | — | Context-window limited |
+Most AI test generators write tests that **don't pass**. testpilot-ai generates, runs, and auto-fixes tests in a loop until they actually work.
+
+| | testpilot-ai | autotest-ai | @n1k1t/unit-generator | Manual |
+|---|---|---|---|---|
+| **Self-healing tests** | ✅ verify & auto-fix loop | ❌ | ✅ fix command | ❌ |
+| **AST analysis** | ✅ TS compiler API | ❌ raw code | ❌ | — |
+| **Coverage-gap filling** | ✅ lcov + cobertura | ❌ | ✅ cobertura | — |
+| **Providers** | OpenAI, Anthropic, Google, Ollama | OpenAI, Claude | OpenAI, Google, Anthropic | — |
+| **Frameworks** | Vitest, Jest, Mocha, Node | Jest, Vitest, Mocha, Node | Jest only | — |
+| **Context-aware** | ✅ follows imports | ❌ | ❌ | — |
+| **Dependencies** | 4 | 0 | 18 | — |
+| **Analyze command** | ✅ find untested files | ❌ | ✅ | — |
 
 ## Install
 
 ```bash
-npm install -D autotest-ai
+npm install -D testpilot-ai
 ```
 
 ## Quick Start
 
 ```bash
-# Generate tests for a single file
-npx autotest src/utils.ts
+# Generate tests for a file
+npx testpilot src/utils.ts
 
-# Use a specific provider and model
-npx autotest src/utils.ts --provider anthropic --model claude-sonnet-4-20250514
+# Generate AND verify — auto-fix until all tests pass
+npx testpilot src/utils.ts --verify
 
-# Generate Jest tests instead of Vitest
-npx autotest src/utils.ts --framework jest
+# Use a specific provider
+npx testpilot src/utils.ts --provider anthropic --model claude-sonnet-4-20250514
 
-# Generate tests for all files in a directory
-npx autotest src/helpers/
+# Analyze your project for untested files
+npx testpilot analyze
 
-# Dry run — preview without writing files
-npx autotest src/utils.ts --dry-run
+# Use local models with Ollama (no API key needed)
+npx testpilot src/utils.ts --provider ollama --model llama3
+```
 
-# Use local models with Ollama
-npx autotest src/utils.ts --provider ollama --model llama3
+## The Verify & Auto-Fix Loop
+
+The killer feature. With `--verify`, testpilot-ai doesn't just generate tests — it **runs them and fixes failures automatically**:
+
+```bash
+npx testpilot src/utils.ts --verify
+```
+
+```
+⚡ testpilot — AI-powered test generation
+
+  Provider: openai (gpt-4o)
+  Framework: vitest
+  Verify & fix: enabled
+
+● Generating tests for utils.ts...
+
+✔ wrote src/utils.test.ts
+▶ Verify iteration 1/3...
+⚠ 3/12 tests failed — sending to LLM for auto-fix...
+▶ Verify iteration 2/3...
+✔ All 12 tests pass!
+
+Done! Generated 12 tests across 1 file(s)
+✔ All tests verified and passing
+```
+
+The loop:
+1. **Generate** tests using AST analysis + LLM
+2. **Run** them with your test framework
+3. **Collect** failures with error messages and stack traces
+4. **Send** failures back to the LLM: "here's the source code, here's the failing test, here's the error — fix it"
+5. **Write** the fixed tests and **repeat** (up to 3 iterations by default)
+
+## Analyze Your Project
+
+Find files that need tests, optionally using coverage data:
+
+```bash
+npx testpilot analyze
+```
+
+```
+⚡ testpilot analyze
+
+  Coverage: 67.3% (1240/1842 lines)
+  Target: 80%
+  Files: 23
+
+Files below target:
+
+  File                                 Coverage   Tests?
+  ──────────────────────────────────────────────────────
+  src/utils/parser.ts                  12.5%      no
+  src/services/auth.ts                 34.2%      yes
+  src/handlers/webhook.ts              45.0%      no
+  src/middleware/cors.ts               61.8%      yes
+
+Generate tests: testpilot generate <file> --verify
+```
+
+If no coverage data exists, it scans for source files without corresponding test files.
+
+## CLI Reference
+
+```
+Usage: testpilot [options] [command]
+
+Commands:
+  generate <target>  Generate tests for a file or directory (default)
+  analyze            Analyze project for files needing tests
+  help [command]     Display help
+
+Generate Options:
+  -p, --provider <provider>   LLM provider (openai, anthropic, google, ollama)
+  -m, --model <model>         Model to use
+  -k, --api-key <key>         API key (or use env var)
+  -f, --framework <framework> Test framework: vitest, jest, mocha, node
+  -o, --out-dir <dir>         Output directory for test files
+  --overwrite                 Overwrite existing test files
+  --verify                    Run tests and auto-fix failures
+  --fix-iterations <n>        Max auto-fix iterations (default: 3)
+  --no-edge-cases             Skip edge case tests
+  --no-error-handling         Skip error handling tests
+  --instructions <text>       Additional instructions for the LLM
+  --dry-run                   Preview without writing files
+  -V, --version               Output the version number
+
+Analyze Options:
+  -t, --target <rate>         Coverage target (0-1, default: 0.8)
+  -l, --limit <n>             Max files to show (default: 15)
 ```
 
 ## How It Works
 
 ```
-┌───────────────┐     ┌──────────────┐     ┌─────────────┐     ┌──────────────┐
-│  Source File   │────▶│  TS Analyzer │────▶│   Prompt     │────▶│  LLM (any)   │
-│  src/utils.ts  │     │  AST Parse   │     │   Engine     │     │  OpenAI, etc  │
-└───────────────┘     └──────────────┘     └─────────────┘     └──────┬───────┘
-                                                                       │
-┌───────────────┐     ┌──────────────┐                                │
-│  Test File    │◀────│  Test Writer  │◀───────────────────────────────┘
-│  utils.test.ts│     │  Parse+Write  │
-└───────────────┘     └──────────────┘
+Source File → TS Analyzer → Import Context → Prompt Engine → LLM → Test Writer
+                                                                        ↓
+                                                              ┌─── Verify Loop ───┐
+                                                              │  Run → Fix → Run  │
+                                                              └───────────────────┘
 ```
 
-1. **Analyze** — Uses the TypeScript compiler API to parse your source file, extracting exported functions, classes, parameters, types, JSDoc, and imports
-2. **Prompt** — Builds a rich, structured prompt with full type information, parameter details, and your source code
-3. **Generate** — Sends to any LLM provider via [aiclientjs](https://www.npmjs.com/package/aiclientjs), with real-time streaming
-4. **Write** — Parses the output, strips markdown artifacts, and writes a clean test file
-
-## CLI Reference
-
-```
-Usage: autotest [options] <target>
-
-Arguments:
-  target                      File or directory to generate tests for
-
-Options:
-  -p, --provider <provider>   LLM provider (openai, anthropic, google, ollama)
-  -m, --model <model>         Model to use
-  -k, --api-key <key>         API key (or use env var)
-  -f, --framework <framework> Test framework: vitest or jest
-  -o, --out-dir <dir>         Output directory for test files
-  --overwrite                 Overwrite existing test files
-  --no-edge-cases             Skip edge case tests
-  --no-error-handling         Skip error handling tests
-  --instructions <text>       Additional instructions for the LLM
-  --max-tokens <n>            Max tokens for LLM response
-  --temperature <n>           Temperature for LLM
-  --dry-run                   Generate tests without writing to disk
-  -s, --stream                Stream LLM output in real-time
-  -V, --version               Output the version number
-  -h, --help                  Display help
-```
+1. **Analyze** — TypeScript compiler API extracts functions, classes, parameters, types, JSDoc
+2. **Context** — Follows relative imports to gather type definitions and related code
+3. **Prompt** — Builds rich prompts with exact import lines, parameter types, and source code
+4. **Generate** — Streams output from any LLM provider via [aiclientjs](https://www.npmjs.com/package/aiclientjs)
+5. **Write** — Strips markdown artifacts, writes clean test file
+6. **Verify** *(optional)* — Runs tests, collects failures, sends to LLM for fixing, repeats
 
 ## Configuration
-
-autotest-ai automatically detects your test framework from `package.json`. You can also configure it via:
-
-### Config file
-
-Create `autotest.config.json` or `.autotestrc` in your project root:
 
 ```json
 {
@@ -118,141 +179,53 @@ Create `autotest.config.json` or `.autotestrc` in your project root:
 }
 ```
 
-### package.json
+Save as `autotest.config.json`, `.autotestrc`, or add to `package.json` under `"autotest"`.
 
-```json
-{
-  "autotest": {
-    "provider": "openai",
-    "model": "gpt-4o",
-    "framework": "vitest"
-  }
-}
-```
-
-### Priority order
-
-CLI flags > Config file > package.json `autotest` field > Auto-detected framework > Defaults
-
-## Environment Variables
-
-Set your API key as an environment variable matching your provider:
-
-```bash
-# OpenAI
-export OPENAI_API_KEY=sk-...
-
-# Anthropic
-export ANTHROPIC_API_KEY=sk-ant-...
-
-# Google
-export GOOGLE_API_KEY=...
-
-# Ollama — no key needed (local)
-```
-
-## Programmatic API
-
-```typescript
-import { generateTests, analyzeFile, resolveConfig } from 'autotest-ai';
-
-// Generate tests programmatically
-const config = resolveConfig({ provider: 'openai', model: 'gpt-4o' });
-const result = await generateTests('src/utils.ts', config);
-
-console.log(`Generated ${result.testCount} tests in ${result.duration}ms`);
-
-// Just analyze a file
-const analysis = analyzeFile('src/utils.ts');
-console.log(analysis.exports); // [{ name: 'add', kind: 'function', ... }]
-```
-
-## What Gets Generated
-
-Given a file like:
-
-```typescript
-// src/math.ts
-export function add(a: number, b: number): number {
-  return a + b;
-}
-
-export function divide(a: number, b: number): number {
-  if (b === 0) throw new Error('Division by zero');
-  return a / b;
-}
-```
-
-autotest-ai generates:
-
-```typescript
-// src/math.test.ts
-import { describe, it, expect } from 'vitest';
-import { add, divide } from './math';
-
-describe('add', () => {
-  it('adds two positive numbers', () => {
-    expect(add(2, 3)).toBe(5);
-  });
-
-  it('adds negative numbers', () => {
-    expect(add(-1, -2)).toBe(-3);
-  });
-
-  it('adds zero', () => {
-    expect(add(0, 5)).toBe(5);
-  });
-
-  it('handles large numbers', () => {
-    expect(add(Number.MAX_SAFE_INTEGER, 0)).toBe(Number.MAX_SAFE_INTEGER);
-  });
-});
-
-describe('divide', () => {
-  it('divides two numbers', () => {
-    expect(divide(10, 2)).toBe(5);
-  });
-
-  it('throws on division by zero', () => {
-    expect(() => divide(10, 0)).toThrow('Division by zero');
-  });
-
-  it('handles decimal results', () => {
-    expect(divide(1, 3)).toBeCloseTo(0.333, 2);
-  });
-});
-```
+**Priority:** CLI flags > Config file > package.json > Auto-detected framework > Defaults
 
 ## Supported Providers
 
 | Provider | Models | Env Variable |
 |----------|--------|-------------|
-| **OpenAI** | gpt-4o, gpt-4o-mini, o1, etc. | `OPENAI_API_KEY` |
-| **Anthropic** | claude-sonnet-4-20250514, claude-haiku, etc. | `ANTHROPIC_API_KEY` |
-| **Google** | gemini-pro, gemini-1.5-pro, etc. | `GOOGLE_API_KEY` |
-| **Ollama** | llama3, codellama, mistral, etc. | None (local) |
+| **OpenAI** | gpt-4o, gpt-4o-mini, o1 | `OPENAI_API_KEY` |
+| **Anthropic** | claude-sonnet-4-20250514, claude-haiku | `ANTHROPIC_API_KEY` |
+| **Google** | gemini-pro, gemini-1.5-pro | `GOOGLE_API_KEY` |
+| **Ollama** | llama3, codellama, mistral | None (local) |
+
+## Programmatic API
+
+```typescript
+import { generateTests, analyzeFile, resolveConfig } from 'testpilot-ai';
+
+const config = resolveConfig({ provider: 'openai', model: 'gpt-4o' });
+
+// Generate with verify & auto-fix
+const result = await generateTests('src/utils.ts', config, {
+  verify: true,
+  maxFixIterations: 3,
+  onStatus: (msg) => console.log(msg),
+});
+
+console.log(`${result.testCount} tests, verified: ${result.verified}`);
+```
 
 ## Architecture
 
 ```
 src/
-├── analyzer/     # TypeScript AST-based code analysis
-├── prompt/       # Context-rich prompt generation
-├── llm/          # LLM client (via aiclientjs)
-├── writer/       # Test output parser & file writer
-├── frameworks/   # Vitest & Jest adapters
-├── config/       # Config file resolution & merging
-├── generate.ts   # Main orchestrator
-├── cli.ts        # Commander-based CLI
-├── types.ts      # Core type definitions
-└── index.ts      # Public API exports
+├── analyzer/      # TS AST analysis + import context gathering
+├── prompt/        # Framework-aware prompt generation
+├── llm/           # LLM client (via aiclientjs)
+├── writer/        # Output parser & file writer
+├── verify/        # Test runner + auto-fix loop
+├── coverage/      # LCOV & Cobertura coverage parsing
+├── frameworks/    # Vitest, Jest, Mocha, Node adapters
+├── config/        # Config resolution & merging
+├── generate.ts    # Main orchestrator
+├── cli.ts         # Commander-based CLI
+├── types.ts       # Core types
+└── index.ts       # Public API
 ```
-
-**Design Principles:**
-- **Single Responsibility** — Each module has one clear job
-- **Open/Closed** — Add new providers/frameworks without modifying existing code
-- **Dependency Inversion** — Core logic depends on abstractions (aiclientjs)
-- **Zero magic** — Transparent AST analysis, no hidden heuristics
 
 ## License
 

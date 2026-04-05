@@ -9,7 +9,7 @@ export interface AutotestConfig {
   model?: string;
   /** API key (or use env var) */
   apiKey?: string;
-  /** Test framework: 'vitest' | 'jest' */
+  /** Test framework: 'vitest' | 'jest' | 'mocha' | 'node' */
   framework: TestFramework;
   /** Output directory for test files (default: same dir as source) */
   outDir?: string;
@@ -27,7 +27,7 @@ export interface AutotestConfig {
   temperature: number;
 }
 
-export type TestFramework = 'vitest' | 'jest';
+export type TestFramework = 'vitest' | 'jest' | 'mocha' | 'node';
 
 export const DEFAULT_CONFIG: AutotestConfig = {
   provider: 'openai',
@@ -115,4 +115,6 @@ export interface AutotestResult {
   categories: TestCategory[];
   duration: number;
   tokensUsed: number;
+  verified?: boolean;
+  verifyIterations?: number;
 }

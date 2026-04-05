@@ -4,7 +4,7 @@ sidebar_position: 2
 
 # Configuration
 
-autotest-ai supports multiple configuration methods with a clear priority order.
+testpilot-ai supports multiple configuration methods with a clear priority order.
 
 ## Priority Order
 
@@ -51,7 +51,7 @@ Add an `autotest` field to your `package.json`:
 
 ## Framework Auto-Detection
 
-autotest-ai automatically detects your test framework from `package.json`:
+testpilot-ai automatically detects your test framework from `package.json`:
 
 - If `vitest` is in `devDependencies` → uses Vitest
 - If `jest` or `@jest/core` is in `devDependencies` → uses Jest

@@ -4,7 +4,7 @@ sidebar_position: 3
 
 # Providers
 
-autotest-ai supports multiple LLM providers through [aiclientjs](https://www.npmjs.com/package/aiclientjs).
+testpilot-ai supports multiple LLM providers through [aiclientjs](https://www.npmjs.com/package/aiclientjs).
 
 ## Supported Providers
 
@@ -19,7 +19,7 @@ autotest-ai supports multiple LLM providers through [aiclientjs](https://www.npm
 
 ```bash
 export OPENAI_API_KEY=sk-...
-npx autotest-ai src/utils.ts --provider openai --model gpt-4o
+npx testpilot src/utils.ts --provider openai --model gpt-4o
 ```
 
 **Recommended models:**
@@ -30,7 +30,7 @@ npx autotest-ai src/utils.ts --provider openai --model gpt-4o
 
 ```bash
 export ANTHROPIC_API_KEY=sk-ant-...
-npx autotest-ai src/utils.ts --provider anthropic --model claude-sonnet-4-20250514
+npx testpilot src/utils.ts --provider anthropic --model claude-sonnet-4-20250514
 ```
 
 **Recommended models:**
@@ -41,7 +41,7 @@ npx autotest-ai src/utils.ts --provider anthropic --model claude-sonnet-4-202505
 
 ```bash
 export GOOGLE_API_KEY=...
-npx autotest-ai src/utils.ts --provider google --model gemini-1.5-pro
+npx testpilot src/utils.ts --provider google --model gemini-1.5-pro
 ```
 
 ## Ollama (Local)
@@ -50,7 +50,7 @@ No API key needed. Install [Ollama](https://ollama.ai/) and pull a model:
 
 ```bash
 ollama pull llama3
-npx autotest-ai src/utils.ts --provider ollama --model llama3
+npx testpilot src/utils.ts --provider ollama --model llama3
 ```
 
 **Recommended local models:**
@@ -72,7 +72,7 @@ Three ways to provide your API key:
 
 2. **CLI flag**:
    ```bash
-   npx autotest-ai src/utils.ts --api-key sk-...
+   npx testpilot src/utils.ts --api-key sk-...
    ```
 
 3. **Config file**:

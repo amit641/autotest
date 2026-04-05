@@ -1,29 +1,34 @@
 import type { AnalyzedFile, AutotestConfig, ExportedSymbol } from '../types.js';
+import type { ImportContext } from '../analyzer/context.js';
 
 /**
  * Build a system prompt for the LLM that establishes the test-generation role.
  */
 export function buildSystemPrompt(config: AutotestConfig): string {
   const framework = config.framework;
-  const importStyle = framework === 'vitest'
-    ? `import { describe, it, expect, vi } from 'vitest';`
-    : `// Jest globals are available`;
 
-  const vitestImport = `import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';`;
+  const frameworkRules: Record<string, string> = {
+    vitest: `- ALWAYS start with: import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+- Use vi.fn() for mocking, vi.spyOn for spying`,
+    jest: `- Jest globals (describe, it, expect, jest) are available — do not import them
+- Use jest.fn() for mocking, jest.spyOn for spying`,
+    mocha: `- ALWAYS start with: import { describe, it } from 'mocha'; import { expect } from 'chai';
+- Use sinon for mocking if needed`,
+    node: `- ALWAYS start with: import { describe, it } from 'node:test'; import assert from 'node:assert/strict';
+- Use assert.strictEqual, assert.throws, assert.deepStrictEqual
+- Use t.mock for mocking`,
+  };
 
   return `You are an expert test engineer. You write comprehensive, production-quality ${framework} tests.
 
 Rules:
 - Use ${framework} syntax and conventions
-- ${framework === 'vitest' ? `ALWAYS start with: ${vitestImport}` : 'Jest globals (describe, it, expect, jest) are available — do not import them'}
+${frameworkRules[framework] ?? frameworkRules['vitest']}
 - Write ONLY the test code — no explanations, no markdown fences, no commentary
 - Use descriptive test names that explain the expected behavior
 - Group related tests in describe blocks
 - Test both happy paths and edge cases
 - Test error conditions and boundary values
-- Mock external dependencies when needed
-- Use ${framework === 'vitest' ? 'vi.fn()' : 'jest.fn()'} for mocking
-- Prefer ${framework === 'vitest' ? "vi.spyOn" : "jest.spyOn"} over manual mocks
 - Import the module under test using the EXACT relative path provided
 - Ensure all tests are independent and can run in any order
 ${config.instructions ? `\nAdditional instructions: ${config.instructions}` : ''}`;
@@ -35,6 +40,7 @@ ${config.instructions ? `\nAdditional instructions: ${config.instructions}` : ''
 export function buildUserPrompt(
   analysis: AnalyzedFile,
   config: AutotestConfig,
+  importContexts?: ImportContext[],
 ): string {
   const testableExports = analysis.exports.filter(
     (e) => e.kind !== 'type' && e.kind !== 'interface',
@@ -85,6 +91,17 @@ export function buildUserPrompt(
   sections.push('```' + analysis.language);
   sections.push(analysis.sourceCode);
   sections.push('```');
+
+  // Import context — related files for better understanding
+  if (importContexts && importContexts.length > 0) {
+    sections.push('\n## Related Files (for context only — do NOT test these)\n');
+    for (const ctx of importContexts) {
+      sections.push(`### ${ctx.importPath} (imports: ${ctx.specifiers.join(', ')})\n`);
+      sections.push('```' + analysis.language);
+      sections.push(ctx.content);
+      sections.push('```\n');
+    }
+  }
 
   sections.push('\nGenerate the test file now. Output ONLY valid test code, nothing else.');
 

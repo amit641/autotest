@@ -7,13 +7,13 @@ sidebar_position: 2
 ## Installation
 
 ```bash
-npm install -D autotest-ai
+npm install -D testpilot-ai
 ```
 
 Or use it directly with npx:
 
 ```bash
-npx autotest-ai src/utils.ts
+npx testpilot src/utils.ts
 ```
 
 ## Prerequisites
@@ -54,7 +54,7 @@ export function divide(a: number, b: number): number {
 Run:
 
 ```bash
-npx autotest-ai src/math.ts --provider openai
+npx testpilot src/math.ts --provider openai
 ```
 
 This generates `src/math.test.ts`:
@@ -91,7 +91,7 @@ describe('divide', () => {
 ## Generate Tests for a Directory
 
 ```bash
-npx autotest-ai src/helpers/
+npx testpilot src/helpers/
 ```
 
 This generates test files for every `.ts`, `.tsx`, `.js`, `.jsx` file in the directory (skipping existing test files).
@@ -101,7 +101,7 @@ This generates test files for every `.ts`, `.tsx`, `.js`, `.jsx` file in the dir
 If you have [Ollama](https://ollama.ai/) installed:
 
 ```bash
-npx autotest-ai src/utils.ts --provider ollama --model llama3
+npx testpilot src/utils.ts --provider ollama --model llama3
 ```
 
 No API key needed — everything runs locally.
