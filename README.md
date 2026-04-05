@@ -4,8 +4,8 @@
 </p>
 
 <p align="center">
-  <a href="https://www.npmjs.com/package/testpilot-ai"><img src="https://img.shields.io/npm/v/testpilot-ai.svg" alt="npm version" /></a>
-  <a href="https://www.npmjs.com/package/testpilot-ai"><img src="https://img.shields.io/npm/dm/testpilot-ai.svg" alt="npm downloads" /></a>
+  <a href="https://www.npmjs.com/package/@amit641/testpilot-ai"><img src="https://img.shields.io/npm/v/@amit641/testpilot-ai.svg" alt="npm version" /></a>
+  <a href="https://www.npmjs.com/package/@amit641/testpilot-ai"><img src="https://img.shields.io/npm/dm/@amit641/testpilot-ai.svg" alt="npm downloads" /></a>
   <a href="https://github.com/amit641/autotest/blob/main/LICENSE"><img src="https://img.shields.io/npm/l/testpilot-ai.svg" alt="license" /></a>
 </p>
 
@@ -30,7 +30,7 @@ Most AI test generators write tests that **don't pass**. testpilot-ai generates,
 ## Install
 
 ```bash
-npm install -D testpilot-ai
+npm install -D @amit641/testpilot-ai
 ```
 
 ## Quick Start
@@ -192,7 +192,7 @@ Save as `autotest.config.json`, `.autotestrc`, or add to `package.json` under `"
 ## Programmatic API
 
 ```typescript
-import { generateTests, analyzeFile, resolveConfig } from 'testpilot-ai';
+import { generateTests, analyzeFile, resolveConfig } from '@amit641/testpilot-ai';
 
 const config = resolveConfig({ provider: 'openai', model: 'gpt-4o' });
 
