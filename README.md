@@ -6,7 +6,11 @@
 <p align="center">
   <a href="https://www.npmjs.com/package/autotest-ai"><img src="https://img.shields.io/npm/v/autotest-ai.svg" alt="npm version" /></a>
   <a href="https://www.npmjs.com/package/autotest-ai"><img src="https://img.shields.io/npm/dm/autotest-ai.svg" alt="npm downloads" /></a>
-  <a href="https://github.com/amit641/autotest-ai/blob/main/LICENSE"><img src="https://img.shields.io/npm/l/autotest-ai.svg" alt="license" /></a>
+  <a href="https://github.com/amit641/autotest/blob/main/LICENSE"><img src="https://img.shields.io/npm/l/autotest-ai.svg" alt="license" /></a>
+</p>
+
+<p align="center">
+  <a href="https://amit641.github.io/autotest/">Docs</a> · <a href="#install">Install</a> · <a href="#quick-start">Quick Start</a> · <a href="https://github.com/amit641/autotest">GitHub</a>
 </p>
 
 ---

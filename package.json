@@ -47,13 +47,13 @@
   ],
   "author": "",
   "license": "MIT",
-  "homepage": "https://github.com/amit641/autotest-ai",
+  "homepage": "https://amit641.github.io/autotest/",
   "repository": {
     "type": "git",
-    "url": "https://github.com/amit641/autotest-ai.git"
+    "url": "https://github.com/amit641/autotest.git"
   },
   "bugs": {
-    "url": "https://github.com/amit641/autotest-ai/issues"
+    "url": "https://github.com/amit641/autotest/issues"
   },
   "engines": {
     "node": ">=18.0.0"
