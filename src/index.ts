@@ -18,9 +18,14 @@ export type {
   ParameterInfo,
   ImportStatement,
   SymbolKind,
+  LLMProvider,
 } from './types.js';
 
-export { DEFAULT_CONFIG } from './types.js';
+export {
+  DEFAULT_CONFIG,
+  SUPPORTED_PROVIDERS,
+  PROVIDER_COST_PER_1K_TOKENS,
+} from './types.js';
 
 export type {
   TestRunResult,

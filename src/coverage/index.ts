@@ -144,8 +144,12 @@ export function parseCobertura(xmlPath: string, cwd: string): CoverageData {
       lineRate,
       branchRate,
       uncoveredLines,
-      totalLines: total || Math.round(1 / (1 - lineRate + 0.001)),
-      coveredLines: covered || Math.round(lineRate * (total || 10)),
+      // If the cobertura report omits per-line entries we honestly report
+      // zero rather than fabricating a count. The lineRate is still useful
+      // for ranking; the totalLines/coveredLines columns will read 0/0
+      // which signals "no per-line detail available" to the analyze CLI.
+      totalLines: total,
+      coveredLines: covered,
       hasTests: existsSync(testFile),
     });
   }

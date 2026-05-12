@@ -58,6 +58,46 @@ describe('subtract', () => {
     const result = parseTestOutput(raw, '/src/utils.ts', DEFAULT_CONFIG);
     expect(result.testCode).toBe('const a = 2;');
   });
+
+  it('preserves triple-backtick string literals inside fenced code', () => {
+    // The previous extractor used indexOf('```')/lastIndexOf('```') and
+    // would slice through any test that contained a backtick string,
+    // corrupting the code passed to the verify loop. The new state-machine
+    // approach must keep the inner backticks intact.
+    const raw = [
+      '```typescript',
+      "import { describe, it, expect } from 'vitest';",
+      "import { renderMarkdown } from './md';",
+      '',
+      "describe('renderMarkdown', () => {",
+      "  it('handles fenced code blocks', () => {",
+      '    const input = "```js\\nconst x = 1;\\n```";',
+      "    expect(renderMarkdown(input)).toContain('<code>');",
+      '  });',
+      '});',
+      '```',
+    ].join('\n');
+
+    const result = parseTestOutput(raw, '/src/md.ts', DEFAULT_CONFIG);
+    expect(result.testCode).toContain('const input = "```js');
+    expect(result.testCode).toContain("expect(renderMarkdown(input)).toContain('<code>');");
+    // The opening/closing fences must be gone.
+    expect(result.testCode.startsWith('```')).toBe(false);
+    expect(result.testCode.endsWith('```')).toBe(false);
+  });
+
+  it('handles tilde fences as well as backtick fences', () => {
+    const raw = '~~~typescript\nconst y = 5;\n~~~';
+    const result = parseTestOutput(raw, '/src/utils.ts', DEFAULT_CONFIG);
+    expect(result.testCode).toBe('const y = 5;');
+  });
+
+  it('handles unterminated fences (LLM truncation) without losing code', () => {
+    const raw = '```typescript\nconst z = 9;\n// model got cut off here';
+    const result = parseTestOutput(raw, '/src/utils.ts', DEFAULT_CONFIG);
+    expect(result.testCode).toContain('const z = 9;');
+    expect(result.testCode).not.toContain('```');
+  });
 });
 
 describe('getTestFilePath', () => {

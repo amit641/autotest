@@ -2,9 +2,18 @@
 // Configuration
 // ---------------------------------------------------------------------------
 
+export type LLMProvider = 'openai' | 'anthropic' | 'google' | 'ollama';
+
+export const SUPPORTED_PROVIDERS: readonly LLMProvider[] = [
+  'openai',
+  'anthropic',
+  'google',
+  'ollama',
+] as const;
+
 export interface AutotestConfig {
-  /** LLM provider: 'openai' | 'anthropic' | 'google' | 'ollama' */
-  provider: string;
+  /** LLM provider */
+  provider: LLMProvider;
   /** Model to use, e.g. 'gpt-4o', 'claude-sonnet-4-20250514' */
   model?: string;
   /** API key (or use env var) */
@@ -37,6 +46,18 @@ export const DEFAULT_CONFIG: AutotestConfig = {
   errorHandling: true,
   maxTokens: 4096,
   temperature: 0.2,
+};
+
+/**
+ * Approximate USD per 1K tokens (input/output averaged) for cost guardrails.
+ * These are deliberate floors-of-magnitude estimates — kept conservative so the
+ * `--max-cost` check errs on the side of warning earlier rather than later.
+ */
+export const PROVIDER_COST_PER_1K_TOKENS: Record<LLMProvider, number> = {
+  openai: 0.005,
+  anthropic: 0.008,
+  google: 0.0035,
+  ollama: 0,
 };
 
 // ---------------------------------------------------------------------------

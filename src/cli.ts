@@ -1,13 +1,21 @@
 import { Command } from 'commander';
 import pc from 'picocolors';
-import { existsSync, statSync, readdirSync } from 'node:fs';
-import { resolve, extname, join } from 'node:path';
+import { existsSync, statSync, readdirSync, readFileSync } from 'node:fs';
+import { resolve, extname, join, dirname } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { resolveConfig } from './config/index.js';
 import { generateTests } from './generate.js';
 import { loadCoverage, getUncoveredFiles } from './coverage/index.js';
-import type { AutotestConfig, AutotestResult, TestFramework } from './types.js';
+import {
+  PROVIDER_COST_PER_1K_TOKENS,
+  SUPPORTED_PROVIDERS,
+  type AutotestConfig,
+  type AutotestResult,
+  type LLMProvider,
+  type TestFramework,
+} from './types.js';
 
-const VERSION = '0.1.0';
+const VERSION = readPackageVersion();
 
 const program = new Command();
 
@@ -22,7 +30,7 @@ program
   .command('generate', { isDefault: true })
   .description('Generate tests for a file or directory')
   .argument('<target>', 'File or directory to generate tests for')
-  .option('-p, --provider <provider>', 'LLM provider (openai, anthropic, google, ollama)')
+  .option('-p, --provider <provider>', `LLM provider (${SUPPORTED_PROVIDERS.join(', ')})`)
   .option('-m, --model <model>', 'Model to use')
   .option('-k, --api-key <key>', 'API key (or use env var)')
   .option('-f, --framework <framework>', 'Test framework: vitest, jest, mocha, node')
@@ -37,6 +45,8 @@ program
   .option('-s, --stream', 'Stream LLM output in real-time', true)
   .option('--verify', 'Run tests after generation and auto-fix failures', false)
   .option('--fix-iterations <n>', 'Max auto-fix iterations (with --verify)', parseInt)
+  .option('-c, --concurrency <n>', 'Number of files to process in parallel', parseInt)
+  .option('--max-cost <usd>', 'Abort the run if estimated cost exceeds this USD amount', parseFloat)
   .action(async (target: string, options: CLIOptions) => {
     try {
       await runGenerate(target, options);
@@ -80,7 +90,22 @@ interface CLIOptions {
   stream?: boolean;
   verify?: boolean;
   fixIterations?: number;
+  concurrency?: number;
+  maxCost?: number;
 }
+
+const IGNORED_DIRS = new Set([
+  'node_modules',
+  'dist',
+  'build',
+  'coverage',
+  '.git',
+  '.next',
+  '.nuxt',
+  '.svelte-kit',
+  '.cache',
+  'docs',
+]);
 
 // ── Generate logic ──────────────────────────────────────────────────────
 
@@ -91,13 +116,15 @@ async function runGenerate(target: string, options: CLIOptions): Promise<void> {
     throw new Error(`Target not found: ${resolvedTarget}`);
   }
 
+  const validatedProvider = validateProvider(options.provider);
+
   const files = collectFiles(resolvedTarget);
   if (files.length === 0) {
     throw new Error('No .ts, .tsx, .js, or .jsx files found');
   }
 
   const config = resolveConfig({
-    provider: options.provider,
+    provider: validatedProvider,
     model: options.model,
     apiKey: options.apiKey,
     framework: options.framework,
@@ -110,15 +137,80 @@ async function runGenerate(target: string, options: CLIOptions): Promise<void> {
     temperature: options.temperature,
   });
 
-  printHeader(files, config, options.verify);
+  printHeader(files, config, options);
 
-  const results: AutotestResult[] = [];
-  for (const file of files) {
-    const result = await generateForFile(file, config, options);
-    results.push(result);
+  if (options.maxCost !== undefined) {
+    confirmCostBudget(files.length, config, options.maxCost);
   }
 
+  const concurrency = Math.max(1, options.concurrency ?? 1);
+  const results = await runWithConcurrency(files, concurrency, (file) =>
+    generateForFile(file, config, options),
+  );
+
   printSummary(results, options.verify);
+}
+
+function validateProvider(provider: string | undefined): LLMProvider | undefined {
+  if (provider === undefined) return undefined;
+  if ((SUPPORTED_PROVIDERS as readonly string[]).includes(provider)) {
+    return provider as LLMProvider;
+  }
+  throw new Error(
+    `Unknown provider "${provider}". Supported: ${SUPPORTED_PROVIDERS.join(', ')}`,
+  );
+}
+
+function confirmCostBudget(
+  fileCount: number,
+  config: AutotestConfig,
+  maxCost: number,
+): void {
+  const perFileTokens = config.maxTokens * 1.5; // generation + ~half a verify round trip
+  const estimatedTokens = fileCount * perFileTokens;
+  const costPer1k = PROVIDER_COST_PER_1K_TOKENS[config.provider];
+  const estimatedCost = (estimatedTokens / 1000) * costPer1k;
+
+  if (estimatedCost > maxCost) {
+    throw new Error(
+      `Estimated cost $${estimatedCost.toFixed(2)} exceeds --max-cost $${maxCost.toFixed(2)} ` +
+        `(${fileCount} files × ~${perFileTokens} tokens × $${costPer1k}/1K). ` +
+        `Raise --max-cost, lower --max-tokens, or scope to fewer files.`,
+    );
+  }
+
+  if (estimatedCost > 0) {
+    console.log(
+      `  ${pc.dim(`Estimated cost: ~$${estimatedCost.toFixed(4)} (cap $${maxCost.toFixed(2)})`)}`,
+    );
+  }
+}
+
+async function runWithConcurrency<T, R>(
+  items: T[],
+  concurrency: number,
+  worker: (item: T) => Promise<R>,
+): Promise<R[]> {
+  if (concurrency <= 1) {
+    const results: R[] = [];
+    for (const item of items) results.push(await worker(item));
+    return results;
+  }
+
+  const results: R[] = new Array(items.length);
+  let cursor = 0;
+
+  async function pull(): Promise<void> {
+    while (true) {
+      const idx = cursor++;
+      if (idx >= items.length) return;
+      results[idx] = await worker(items[idx]!);
+    }
+  }
+
+  const pool = Array.from({ length: Math.min(concurrency, items.length) }, () => pull());
+  await Promise.all(pool);
+  return results;
 }
 
 function collectFiles(target: string): string[] {
@@ -138,19 +230,36 @@ function collectFiles(target: string): string[] {
 
   if (stat.isDirectory()) {
     const files: string[] = [];
-    const entries = readdirSync(target, { withFileTypes: true });
-    for (const entry of entries) {
-      if (entry.isFile()) {
-        const ext = extname(entry.name);
-        if (validExts.has(ext) && !entry.name.includes('.test.') && !entry.name.includes('.spec.')) {
-          files.push(join(target, entry.name));
-        }
-      }
-    }
+    walkDirectory(target, validExts, files);
     return files.sort();
   }
 
   return [];
+}
+
+function walkDirectory(dir: string, validExts: Set<string>, out: string[]): void {
+  let entries;
+  try {
+    entries = readdirSync(dir, { withFileTypes: true });
+  } catch {
+    return;
+  }
+
+  for (const entry of entries) {
+    if (entry.name.startsWith('.') && entry.name !== '.') continue;
+    if (IGNORED_DIRS.has(entry.name)) continue;
+
+    const full = join(dir, entry.name);
+    if (entry.isDirectory()) {
+      walkDirectory(full, validExts, out);
+    } else if (entry.isFile()) {
+      const ext = extname(entry.name);
+      if (!validExts.has(ext)) continue;
+      if (entry.name.includes('.test.') || entry.name.includes('.spec.')) continue;
+      if (entry.name.endsWith('.d.ts')) continue;
+      out.push(full);
+    }
+  }
 }
 
 async function generateForFile(
@@ -165,12 +274,18 @@ async function generateForFile(
   }
   console.log();
 
+  // Streaming output is only useful when one file is in flight at a time.
+  // With concurrency > 1, multiple streams interleave into garbage, so we
+  // suppress per-chunk streaming above 1.
+  const concurrency = Math.max(1, options.concurrency ?? 1);
+  const enableStreaming = options.stream && concurrency === 1;
+
   let streamOutput = '';
   const result = await generateTests(file, config, {
     dryRun: options.dryRun,
     verify: options.verify,
     maxFixIterations: options.fixIterations ?? 3,
-    onChunk: options.stream
+    onChunk: enableStreaming
       ? (chunk) => {
           process.stdout.write(pc.dim(chunk));
           streamOutput += chunk;
@@ -286,7 +401,8 @@ function findSourceFilesWithoutTests(cwd: string): string[] {
     try {
       const entries = readdirSync(dir, { withFileTypes: true });
       for (const entry of entries) {
-        if (entry.name === 'node_modules' || entry.name === 'dist' || entry.name === '.git' || entry.name === 'docs') continue;
+        if (entry.name.startsWith('.') && entry.name !== '.') continue;
+        if (IGNORED_DIRS.has(entry.name)) continue;
 
         const fullPath = join(dir, entry.name);
         if (entry.isDirectory()) {
@@ -321,14 +437,21 @@ function findSourceFilesWithoutTests(cwd: string): string[] {
 
 // ── Output helpers ──────────────────────────────────────────────────────
 
-function printHeader(files: string[], config: AutotestConfig, verify?: boolean): void {
+function printHeader(
+  files: string[],
+  config: AutotestConfig,
+  options: CLIOptions,
+): void {
   console.log(`\n${pc.bold(pc.magenta('⚡ testpilot'))} — AI-powered test generation\n`);
   console.log(`  ${pc.dim('Provider:')} ${config.provider}${config.model ? ` (${config.model})` : ''}`);
   console.log(`  ${pc.dim('Framework:')} ${config.framework}`);
   console.log(`  ${pc.dim('Files:')} ${files.length}`);
   console.log(`  ${pc.dim('Edge cases:')} ${config.edgeCases ? 'yes' : 'no'}`);
   console.log(`  ${pc.dim('Error handling:')} ${config.errorHandling ? 'yes' : 'no'}`);
-  if (verify) {
+  if (options.concurrency && options.concurrency > 1) {
+    console.log(`  ${pc.dim('Concurrency:')} ${options.concurrency}`);
+  }
+  if (options.verify) {
     console.log(`  ${pc.dim('Verify & fix:')} ${pc.green('enabled')}`);
   }
 }
@@ -351,6 +474,30 @@ function printSummary(results: AutotestResult[], verify?: boolean): void {
   }
 
   console.log(`${pc.dim(`Total: ${totalTokens} tokens | ${(totalDuration / 1000).toFixed(1)}s`)}\n`);
+}
+
+// ── Bootstrapping ───────────────────────────────────────────────────────
+
+function readPackageVersion(): string {
+  // Walk up from this file looking for our package.json. Works in both
+  // dev (running from src/) and built output (running from dist/).
+  try {
+    const here = dirname(fileURLToPath(import.meta.url));
+    let dir = here;
+    for (let i = 0; i < 5; i++) {
+      const candidate = resolve(dir, 'package.json');
+      if (existsSync(candidate)) {
+        const pkg = JSON.parse(readFileSync(candidate, 'utf-8')) as { version?: string };
+        if (pkg.version) return pkg.version;
+      }
+      const parent = dirname(dir);
+      if (parent === dir) break;
+      dir = parent;
+    }
+  } catch {
+    // fall through
+  }
+  return '0.0.0-unknown';
 }
 
 program.parse();

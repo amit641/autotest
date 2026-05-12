@@ -72,4 +72,58 @@ describe('gatherImportContext', () => {
 
     expect(contexts).toHaveLength(2);
   });
+
+  it('resolves tsconfig path aliases', () => {
+    // Build a mini-project layout:
+    //   __ctx_alias__/
+    //     tsconfig.json   ({ baseUrl: ".", paths: { "@/*": ["src/*"] } })
+    //     src/
+    //       lib/helpers.ts
+    //       app/main.ts   (imports "@/lib/helpers")
+    const projectRoot = join(FIXTURES_DIR, 'alias-project');
+    const srcDir = join(projectRoot, 'src');
+    const libDir = join(srcDir, 'lib');
+    const appDir = join(srcDir, 'app');
+    mkdirSync(libDir, { recursive: true });
+    mkdirSync(appDir, { recursive: true });
+
+    writeFileSync(
+      join(projectRoot, 'tsconfig.json'),
+      JSON.stringify({
+        compilerOptions: {
+          baseUrl: '.',
+          paths: { '@/*': ['src/*'] },
+        },
+      }),
+    );
+
+    writeFileSync(
+      join(libDir, 'helpers.ts'),
+      `export function shout(s: string): string { return s.toUpperCase(); }`,
+    );
+
+    writeFileSync(
+      join(appDir, 'main.ts'),
+      `import { shout } from '@/lib/helpers';\nexport function greet(name: string): string { return shout(name); }`,
+    );
+
+    const analysis = analyzeFile(join(appDir, 'main.ts'));
+    const contexts = gatherImportContext(analysis);
+
+    expect(contexts).toHaveLength(1);
+    expect(contexts[0]!.importPath).toBe('@/lib/helpers');
+    expect(contexts[0]!.content).toContain('export function shout');
+  });
+
+  it('still skips bare external imports when no alias matches', () => {
+    writeFileSync(
+      join(FIXTURES_DIR, 'with-external.ts'),
+      `import { something } from 'some-external-pkg';\nexport const z = 1;`,
+    );
+
+    const analysis = analyzeFile(join(FIXTURES_DIR, 'with-external.ts'));
+    const contexts = gatherImportContext(analysis);
+
+    expect(contexts).toHaveLength(0);
+  });
 });

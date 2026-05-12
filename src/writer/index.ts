@@ -11,20 +11,7 @@ export function parseTestOutput(
   sourceFile: string,
   config: AutotestConfig,
 ): GeneratedTest {
-  let code = raw.trim();
-
-  // Extract code from markdown fences — handles preamble text before fences
-  const fenceStart = code.indexOf('```');
-  if (fenceStart !== -1) {
-    code = code.slice(fenceStart);
-    const firstNewline = code.indexOf('\n');
-    code = code.slice(firstNewline + 1);
-    const lastFence = code.lastIndexOf('```');
-    if (lastFence !== -1) {
-      code = code.slice(0, lastFence);
-    }
-    code = code.trim();
-  }
+  const code = extractCodeFromFences(raw);
 
   // Count tests
   const itMatches = code.match(/\bit\s*\(/g) || [];
@@ -76,6 +63,55 @@ export function getTestFilePath(
   const dir = config.outDir ?? dirname(sourceFile);
 
   return join(dir, `${base}.test${ext}`);
+}
+
+/**
+ * Strip surrounding markdown code fences from LLM output, while leaving
+ * fences that appear *inside* string literals or template literals alone.
+ *
+ * Strategy: walk the text line by line and only treat a line as a fence
+ * boundary when it begins (after optional whitespace) with three or more
+ * backticks. This is far more robust than `indexOf('```')`, which slices
+ * through any test that contains a triple-backtick string literal.
+ */
+export function extractCodeFromFences(raw: string): string {
+  const text = raw.trim();
+  if (!text) return '';
+
+  const lines = text.split('\n');
+  const fenceRe = /^[ \t]*(`{3,}|~{3,})/;
+
+  let openIdx = -1;
+  let openMarker = '';
+  for (let i = 0; i < lines.length; i++) {
+    const m = fenceRe.exec(lines[i]!);
+    if (m) {
+      openIdx = i;
+      openMarker = m[1]!;
+      break;
+    }
+  }
+
+  if (openIdx === -1) {
+    return text;
+  }
+
+  // Find the matching closing fence (same marker length & character).
+  // Walk from the end so we tolerate intermediate fences inside the body.
+  let closeIdx = -1;
+  const closeRe = new RegExp(`^[ \\t]*${openMarker[0] === '`' ? '`' : '~'}{${openMarker.length},}\\s*$`);
+  for (let i = lines.length - 1; i > openIdx; i--) {
+    if (closeRe.test(lines[i]!)) {
+      closeIdx = i;
+      break;
+    }
+  }
+
+  if (closeIdx === -1) {
+    return lines.slice(openIdx + 1).join('\n').trim();
+  }
+
+  return lines.slice(openIdx + 1, closeIdx).join('\n').trim();
 }
 
 function extractCategories(code: string): TestCategory[] {
