@@ -55,8 +55,29 @@ testpilot-ai automatically detects your test framework from `package.json`:
 
 - If `vitest` is in `devDependencies` → uses Vitest
 - If `jest` or `@jest/core` is in `devDependencies` → uses Jest
-- If the `test` script contains `vitest` or `jest` → uses that framework
+- If `mocha` is in `devDependencies` → uses Mocha
+- If the `test` script contains `vitest`, `jest`, `mocha`, or `node --test` → uses that framework
 - Default → Vitest
+
+When `--verify` is used, testpilot also **preflights** that the chosen framework is actually installed in your project (`node_modules/<framework>` exists). If not, it fails fast with a clear `FrameworkNotInstalledError` instead of hanging on an `npx` install prompt.
+
+## TypeScript Path Aliases
+
+When the analyzer follows imports for context, it resolves both relative paths *and* tsconfig path aliases. Given a `tsconfig.json` like:
+
+```json
+{
+  "compilerOptions": {
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["src/*"],
+      "~lib/*": ["src/lib/*"]
+    }
+  }
+}
+```
+
+…imports such as `import { foo } from '@/lib/foo'` are followed back into the project so the LLM has the relevant type definitions in context. External `node_modules` imports are still skipped.
 
 ## Environment Variables
 
@@ -73,10 +94,10 @@ API keys are resolved from standard environment variables:
 
 | Option | Type | Default | Description |
 |---|---|---|---|
-| `provider` | `string` | `"openai"` | LLM provider |
+| `provider` | `LLMProvider` | `"openai"` | LLM provider — `openai`, `anthropic`, `google`, or `ollama` |
 | `model` | `string` | Provider default | Model name |
 | `apiKey` | `string` | From env var | API key |
-| `framework` | `"vitest" \| "jest"` | Auto-detected | Test framework |
+| `framework` | `"vitest" \| "jest" \| "mocha" \| "node"` | Auto-detected | Test framework |
 | `outDir` | `string` | Same as source | Output directory |
 | `overwrite` | `boolean` | `false` | Overwrite existing tests |
 | `edgeCases` | `boolean` | `true` | Include edge case tests |

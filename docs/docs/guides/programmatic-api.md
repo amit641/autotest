@@ -30,6 +30,36 @@ console.log(`Duration: ${result.duration}ms`);
 console.log(`Tokens used: ${result.tokensUsed}`);
 ```
 
+## Generate with Verify & Auto-Fix
+
+```typescript
+import { generateTests, resolveConfig, FrameworkNotInstalledError } from '@amit641/testpilot-ai';
+
+const config = resolveConfig({ provider: 'openai', framework: 'vitest' });
+
+try {
+  const result = await generateTests('src/utils.ts', config, {
+    verify: true,
+    maxFixIterations: 3,
+    onStatus: (msg) => console.log(msg),
+  });
+
+  if (result.verified) {
+    console.log(`All ${result.testCount} tests pass after ${result.verifyIterations} iteration(s).`);
+  } else {
+    console.log(`Best version persisted with ${result.testCount} tests; some still fail.`);
+  }
+} catch (err) {
+  if (err instanceof FrameworkNotInstalledError) {
+    console.error(`Install ${err.framework} in ${err.cwd} first.`);
+  } else {
+    throw err;
+  }
+}
+```
+
+> The verify loop tracks the best version observed across iterations and never lets the test file regress. If iteration 3 produces strictly worse code than iteration 2, the file is rolled back automatically.
+
 ## Analyze a File
 
 ```typescript
@@ -109,6 +139,20 @@ const info = getFrameworkInfo('vitest');
 console.log(info.runCommand); // 'npx vitest run'
 ```
 
+## Coverage-Driven Discovery
+
+```typescript
+import { loadCoverage, getUncoveredFiles } from '@amit641/testpilot-ai';
+
+const coverage = loadCoverage(process.cwd());
+if (coverage) {
+  const targets = getUncoveredFiles(coverage, 0.8).slice(0, 5);
+  for (const file of targets) {
+    console.log(`${file.relativePath}: ${(file.lineRate * 100).toFixed(1)}%`);
+  }
+}
+```
+
 ## Types
 
 All types are exported for TypeScript usage:
@@ -125,5 +169,12 @@ import type {
   ParameterInfo,
   ImportStatement,
   SymbolKind,
+  LLMProvider,
+} from '@amit641/testpilot-ai';
+
+import {
+  DEFAULT_CONFIG,
+  SUPPORTED_PROVIDERS,
+  PROVIDER_COST_PER_1K_TOKENS,
 } from '@amit641/testpilot-ai';
 ```

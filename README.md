@@ -17,14 +17,15 @@
 
 ## Why testpilot-ai?
 
-Most AI test generators write tests that **don't pass**. testpilot-ai generates, runs, and auto-fixes tests in a loop until they actually work.
+Most AI test generators write tests that **don't pass**. testpilot-ai generates, runs, and auto-fixes tests in a loop until they actually work — and never lets the test file regress beyond the best version it has seen.
 
-- **Self-healing tests** — Verify & auto-fix loop until all tests pass
+- **Self-healing tests** — Verify & auto-fix loop with best-version persistence and oscillation detection
 - **AST analysis** — TypeScript compiler API extracts functions, classes, types, JSDoc
+- **Bounded import context** — Follows relative imports *and* tsconfig path aliases (`@/foo`, `~lib/*`) back into your project, capped at 5 files × 3 KB
 - **Coverage-gap filling** — Parse lcov/cobertura, generate tests for uncovered code
 - **Any LLM** — OpenAI, Anthropic, Google, Ollama (local models)
 - **4 frameworks** — Vitest, Jest, Mocha, Node test runner
-- **Context-aware** — Follows relative imports for richer prompts
+- **Cost & concurrency controls** — `--max-cost <usd>` and `--concurrency <n>` for safe parallel runs
 - **Analyze command** — Find files that need tests
 
 ## Install
@@ -134,6 +135,8 @@ Generate Options:
   --overwrite                 Overwrite existing test files
   --verify                    Run tests and auto-fix failures
   --fix-iterations <n>        Max auto-fix iterations (default: 3)
+  -c, --concurrency <n>       Process N files in parallel (default: 1)
+  --max-cost <usd>            Abort the run if estimated cost exceeds this USD amount
   --no-edge-cases             Skip edge case tests
   --no-error-handling         Skip error handling tests
   --instructions <text>       Additional instructions for the LLM
@@ -150,17 +153,18 @@ Analyze Options:
 ```
 Source File → TS Analyzer → Import Context → Prompt Engine → LLM → Test Writer
                                                                         ↓
-                                                              ┌─── Verify Loop ───┐
-                                                              │  Run → Fix → Run  │
-                                                              └───────────────────┘
+                                                          ┌──── Verify Loop ────┐
+                                                          │  Run → Fix → Run    │
+                                                          │  (best-version kept)│
+                                                          └─────────────────────┘
 ```
 
 1. **Analyze** — TypeScript compiler API extracts functions, classes, parameters, types, JSDoc
-2. **Context** — Follows relative imports to gather type definitions and related code
-3. **Prompt** — Builds rich prompts with exact import lines, parameter types, and source code
-4. **Generate** — Streams output from any LLM provider via [aiclientjs](https://www.npmjs.com/package/aiclientjs)
-5. **Write** — Strips markdown artifacts, writes clean test file
-6. **Verify** *(optional)* — Runs tests, collects failures, sends to LLM for fixing, repeats
+2. **Context** — Follows relative imports *and* tsconfig path aliases (`@/foo`, `~lib/*`) back into the project; capped at 5 files × 3 KB; deduped; `node_modules` skipped
+3. **Prompt** — Builds rich prompts with exact import lines, parameter types, source code, and labeled "for context only" related files
+4. **Generate** — Streams output from any LLM provider via [aiclientjs](https://www.npmjs.com/package/aiclientjs); aborts up-front if `--max-cost` would be exceeded
+5. **Write** — Line-based fence state machine strips markdown wrappers without breaking triple-backtick string literals inside the test code
+6. **Verify** *(optional)* — Runs tests; trusts the runner's exit code as the only authoritative pass/fail signal; consolidates per-failure markers across reporters; sends only the failure deltas back to the LLM; **rolls back if a fix iteration regresses**; stops early if the same failures repeat (oscillation)
 
 ## Configuration
 
